@@ -31,7 +31,7 @@ to find where the two have drifted apart.
 ## Install (as a plugin)
 
 ```
-/plugin marketplace add <your-github-user>/contract-map
+/plugin marketplace add tosanjay/contract-map
 /plugin install contract-map@contract-map
 ```
 

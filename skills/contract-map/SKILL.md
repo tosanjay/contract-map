@@ -6,11 +6,14 @@ description: >-
   data's name, its type/key fields, and the producer as file:function), plus per-block and per-edge
   comment threads and a verified/drift status kept in sync with the code. Use this whenever the user
   wants to map, diagram, or specify a pipeline, architecture, data flow, service graph, or a system's
-  components and the contracts between them; wants a living spec they can edit, comment on, and check
-  the implementation against; or asks things like "map the components", "diagram the pipeline", "what
-  are the inputs and outputs of each stage", "turn the architecture into an editable spec", "where does
-  this value come from", or "give me a shared contract to spot gaps between intent and implementation".
-  Prefer this over a static diagram whenever the user will keep, edit, comment on, or verify the result.
+  components and the contracts between them — whether reverse-engineering existing code or specifying a
+  new or in-progress system up front and checking the code against that spec as it gets built. Also use
+  it when the user wants a living spec they can edit, comment on, and verify against the implementation,
+  or asks things like "map the components", "diagram the pipeline", "what are the inputs and outputs of
+  each stage", "spec the system before I build it", "turn the architecture into an editable spec",
+  "where does this value come from", or "give me a shared contract to spot gaps between intent and
+  implementation". Prefer this over a static diagram whenever the user will keep, edit, comment on, or
+  verify the result.
 ---
 
 # Contract Map
@@ -42,17 +45,27 @@ The data lives in the artifact's shared database (the `db` capability), in three
 
 ## Workflow
 
-### 1. Scope the map from the code (don't guess)
+### 1. Scope the map — from the code, or as intended design
 
-Read the system first. Identify the meaningful components or stages and the data that actually flows
-between them. Aim for the altitude the user asked for — usually 5–20 blocks. One block per genuine
-stage/service/module, not per function. For each hand-off, name the data, its key fields, and the
-`file:function` that produces it. Follow the real calls; if a value is produced in one place and
-consumed in another, that is exactly the edge worth drawing.
+Two ways in, and the tool is valuable both directions:
 
-If the system is large or unfamiliar, it's fine to ask the user for the entry points or the component
-list, then fill in the edges from the code. A map seeded from the real code (with honest producer refs)
-is what makes the user's corrections meaningful.
+- **Reverse-engineer (existing code).** Read the system and seed the map from what the code actually
+  does — the real components, the data between them, and the `file:function` that produces each edge.
+  Follow the real calls; a value produced in one place and consumed in another is exactly an edge worth
+  drawing. Seed blocks `unchecked`; the verification pass confirms or flags them later.
+
+- **Contract-first (new or in-progress project).** When there is little or no code yet, author the
+  *intended* contract — the components you plan to build and the data they should hand off. Seed blocks
+  `unchecked`, and leave `producer` blank or set it to the planned location. As the code gets written,
+  the verification pass marks each block `verified` or `drift`, so the map becomes a running check of the
+  implementation against intent. This is often the more valuable mode: it surfaces unbuilt or diverged
+  pieces early, while they are cheap to fix.
+
+Either way, aim for the altitude the user asked for — usually 5–20 blocks, one per genuine
+component/stage/service, not per function. If the system is large, unfamiliar, or not yet built, ask the
+user for the entry points, the component list, or the intended design, then fill in the edges. A map
+seeded honestly (real producer refs where code exists, blank/planned where it doesn't) is what makes the
+user's corrections and the later checks meaningful.
 
 ### 2. Publish the artifact
 
@@ -69,27 +82,29 @@ The page renders an empty state first, then fills from the store — so seed the
 ### 3. Seed the blocks and edges
 
 Use the `ArtifactData` tool, `action: "batch"` (up to 50 writes per call), into the `blocks` and
-`edges` collections. Give blocks `status: "unchecked"` to start — you have not verified them yet, and
-claiming otherwise defeats the point. Edge `source`/`target` are block ids, or the sentinels `ext:in`
-(external input) and `ext:out` (final output). Exact field names and example batches are in
-`references/db-schema.md`.
+`edges` collections. Give blocks `status: "unchecked"` to start — in reverse-engineer mode you have not
+verified them yet; in contract-first mode they are intent, not yet built. Edge `source`/`target` are
+block ids, or the sentinels `ext:in` (external input) and `ext:out` (final output). Exact field names and
+example batches are in `references/db-schema.md`.
 
 ### 4. Hand it over
 
 Tell the user the URL and that it's private to them (others need the Share menu). In one or two lines,
 how it works: tap a block title or any edge to edit it; the 💬 on every block and edge opens a comment
-thread; the status line shows open questions. Say plainly that the seeded producers/types are your
-reading of the code and they should correct anything wrong — that's the first useful pass.
+thread; the status line shows open questions. Say plainly whether the seeded content is read from real
+code (and may be slightly off — correct it) or is the intended design to be filled in as they build.
 
 ### 5. Verify against the code (the recurring job)
 
 When the user asks (or proactively, when you've been in the code), do a verification pass:
 - Read the current `blocks` and `edges` with `ArtifactData`.
-- For each block, check the real code against its declared inputs and outputs: does the producer still
-  exist at that `file:function`? Does it still produce that shape? Is a declared input actually consumed?
+- For each block, check the real code against its declared inputs and outputs: does the producer exist at
+  that `file:function`? Does it still produce that shape? Is a declared input actually consumed? In
+  contract-first mode, has it been built at all?
 - Set each block's `status` to `verified` or `drift`, with a short `statusNote` saying what you checked
-  or where it diverged, and `statusDate` = today. Update via `ArtifactData` `action: "update"` (pin
-  `if_version` — the schema reference shows how).
+  or where it diverged (in contract-first mode, `drift` also covers "not yet implemented" — say so), and
+  `statusDate` = today. Update via `ArtifactData` `action: "update"` (pin `if_version` — the schema
+  reference shows how).
 - Report the drifts to the user; those are the gaps between intent and implementation this whole thing
   exists to surface.
 

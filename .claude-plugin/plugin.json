@@ -4,7 +4,7 @@
   "description": "Build an editable component input/output contract for any system as a claude.ai artifact — typed input/output edges per component (name, type, producer file:function), per-block and per-edge comment threads, and a verified/drift status checked against the code.",
   "author": { "name": "Sanjay Rawat" },
   "license": "MIT",
-  "homepage": "https://github.com/REPLACE-ME/contract-map",
-  "repository": "https://github.com/REPLACE-ME/contract-map",
+  "homepage": "https://github.com/tosanjay/contract-map",
+  "repository": "https://github.com/tosanjay/contract-map",
   "keywords": ["architecture", "diagram", "pipeline", "contract", "data-flow", "spec", "artifact", "skill"]
 }
