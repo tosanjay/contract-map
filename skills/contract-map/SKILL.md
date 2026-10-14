@@ -115,6 +115,23 @@ block or edge id), answer by writing a comment with `author: "claude"` and a mil
 appears in that thread on the page. Keep answers grounded in the code, and when a comment reveals the
 contract is wrong, fix the block/edge too, not just the reply.
 
+### 7. Keep the contract current with decisions (avoid false drift)
+
+The contract can go stale a second way, not just the code moving: a decision made in conversation (here in
+the CLI, or in a design doc or a commit message) changes the *intended* contract but never reaches the map.
+A later verification pass then reports "drift" that is really the spec being out of date, not a code
+violation — a false alarm that erodes trust in the map. Two disciplines prevent it:
+
+- **Write decisions into the map as they happen.** When a conversation changes what a component should
+  consume or produce, or adds, removes, or retires a stage, update the `blocks`/`edges` in the same step —
+  the way you'd update a design doc — and record *why* as a comment on that block or edge. The comment
+  thread is the audit trail of what the contract says and why; don't let an agreed change live only in chat.
+- **Reconcile intent before you flag code.** A verification pass is code against *current intent*, so first
+  bring the contract up to date with any agreed-but-unapplied decisions (check the recent conversation,
+  design docs, and commits since the block's `statusDate`). A mismatch that matches a decision means the
+  contract was stale — update it and mark it `verified` against the new intent, don't report the code. Only
+  a mismatch with no corresponding decision is real code drift.
+
 ## Notes
 
 - This produces a **claude.ai Artifact** and needs the `db` + `user` capabilities (declared on publish).
