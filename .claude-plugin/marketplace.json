@@ -1,0 +1,14 @@
+{
+  "name": "contract-map",
+  "owner": { "name": "Sanjay Rawat" },
+  "description": "Contract Map — editable component input/output contracts as claude.ai artifacts.",
+  "plugins": [
+    {
+      "name": "contract-map",
+      "source": "./",
+      "description": "Build an editable component input/output contract for any system as a claude.ai artifact.",
+      "category": "visualization",
+      "tags": ["architecture", "pipeline", "contract", "diagram", "data-flow"]
+    }
+  ]
+}
