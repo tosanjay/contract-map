@@ -12,6 +12,8 @@ artifact's `url` on every call. Three collections:
 | `name` | string | display name |
 | `role` | string | one line: what this component does |
 | `order` | number | position in the chain (ascending) |
+| `phase` | string | optional display number: a major phase `"4"`, or a sub-phase `"4.A"` (shown indented). Blank = the running position |
+| `phaseTitle` | string | optional: title of the major phase; shown as a header row over a phase made only of sub-phases |
 | `lane` | string | optional grouping label (subsystem / layer / phase); blank = omitted |
 | `status` | string | `unchecked` \| `verified` \| `drift` |
 | `statusNote` | string | what you verified, or where it drifted |

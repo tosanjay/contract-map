@@ -67,6 +67,12 @@ user for the entry points, the component list, or the intended design, then fill
 seeded honestly (real producer refs where code exists, blank/planned where it doesn't) is what makes the
 user's corrections and the later checks meaningful.
 
+Number the blocks the way a reader thinks about the system. Give the major phases a number (`phase: "4"`).
+Give the steps inside a phase a letter (`"5.A"`, `"5.B"`); they render indented under that phase. A phase made
+only of sub-steps gets a header row from `phaseTitle`. Draw a block only for a real stage. A loop inside a
+stage (a tool loop, a retry loop) is an input edge on that stage, or an edge from the stage to itself, not a
+block of its own: a separate block reads as a separate pipeline step.
+
 ### 2. Publish the artifact
 
 Copy the template to a working file so you can set its name, then publish it:

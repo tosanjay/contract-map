@@ -75,6 +75,12 @@
   /* flow */
   .flow{margin-top:18px;display:flex;flex-direction:column;align-items:stretch;gap:0}
   .connector{align-self:center;width:2px;height:20px;background:linear-gradient(var(--line),var(--accent))}
+  .phase-head{display:flex;align-items:baseline;gap:10px;padding:4px 4px 8px;font-size:12px;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--ink-soft);font-weight:600}
+  .phase-head .pnum{font-family:var(--mono);color:var(--accent);font-size:13px}
+  .stage.sub{margin-left:22px}
+  .stage.sub::before{background:color-mix(in srgb,var(--accent) 45%,transparent)}
+  .stage-head .idx{min-width:30px}
   .stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
     overflow:hidden;position:relative}
   .stage::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
@@ -259,13 +265,24 @@
     const inBy={}, outBy={};
     for(const e of edges.values()){ (inBy[e.target]=inBy[e.target]||[]).push(e); (outBy[e.source]=outBy[e.source]||[]).push(e); }
     const frag=document.createDocumentFragment();
+    // phases: a major phase is a number ("4"), a sub-phase adds a letter ("4.A"); a major phase made only of
+    // sub-phases gets a header row with its title (the phaseTitle of any of its blocks)
+    const major=b=>String(b.phase||"").split(".")[0];
+    const titles={}; for(const b of list){ if(b.phaseTitle&&major(b)) titles[major(b)]=b.phaseTitle; }
+    let lastMajor=null;
     list.forEach((b,i)=>{
       if(i>0){const c=document.createElement("div");c.className="connector";frag.appendChild(c);}
+      const m=major(b), sub=String(b.phase||"").includes(".");
+      if(sub && m!==lastMajor && !list.some(x=>String(x.phase||"")===m)){
+        const h=document.createElement("div");h.className="phase-head";
+        h.innerHTML='<span class="pnum">'+esc(m)+'</span><span>'+esc(titles[m]||"")+'</span>';frag.appendChild(h);
+      }
+      lastMajor=m;
       const ins=(inBy[b.id]||[]).sort(byLabel), outs=(outBy[b.id]||[]).sort(byLabel);
-      const card=document.createElement("section");card.className="stage";
+      const card=document.createElement("section");card.className="stage"+(sub?" sub":"");
       card.innerHTML =
         '<div class="stage-head" data-block="'+esc(b.id)+'">'+
-          '<div class="idx">'+String(i+1).padStart(2,"0")+'</div>'+
+          '<div class="idx">'+esc(b.phase||String(i+1))+'</div>'+
           '<div class="stage-title"><div class="stage-name">'+esc(b.name||"(unnamed)")+
             (b.lane?' <span class="lane">'+esc(b.lane)+'</span>':'')+statusChip(b)+cBadge(b.id,true)+
             (canEdit?' <span class="edit-dot" aria-hidden="true">✎</span>':'')+'</div>'+
@@ -350,6 +367,8 @@
       fieldHtml("f_id","ID",b.id, id?"(fixed)":"short key, e.g. deep_re",{mono:true})+
       fieldHtml("f_name","Name",b.name)+
       fieldHtml("f_role","Role",b.role,"one line: what this stage does",{type:"textarea"})+
+      fieldHtml("f_phase","Phase",b.phase||"","major phase number, or a sub-phase like 5.A",{mono:true})+
+      fieldHtml("f_ptitle","Phase title",b.phaseTitle||"","shown over a phase made only of sub-phases")+
       fieldHtml("f_order","Order",b.order,"position in the chain",{inputType:"number"})+
       fieldHtml("f_lane","Group / lane",b.lane,"optional grouping label")+
       fieldHtml("f_status","Check status",b.status||"unchecked","",{options:STATUS.map(s=>({v:s,t:s}))})+
@@ -362,6 +381,7 @@
       const newId = id || slug($("#f_id").value||$("#f_name").value);
       if(!newId){toast("Need an ID");return;}
       const data={name:$("#f_name").value.trim(),role:$("#f_role").value.trim(),order:Number($("#f_order").value)||0,
+        phase:$("#f_phase").value.trim(),phaseTitle:$("#f_ptitle").value.trim(),
         lane:$("#f_lane").value,status:$("#f_status").value,statusNote:$("#f_note").value.trim(),
         statusDate:($("#f_status").value!=="unchecked")?today():(b.statusDate||"")};
       await writeDoc("blocks",newId,data);
